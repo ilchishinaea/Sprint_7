@@ -1,41 +1,51 @@
+package tests;
+
+import api.CourierApi;
+import base.BaseTest;
 import io.qameta.allure.Step;
-import io.restassured.RestAssured;
 import io.restassured.response.Response;
-import org.junit.jupiter.api.BeforeEach;
+import models.Courier;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
-
 import java.util.UUID;
 import java.util.stream.Stream;
 
-import static io.restassured.RestAssured.given;
-import static org.hamcrest.Matchers.equalTo;
+public class CreateCourierParamTest extends BaseTest {
 
-public class CreateCourierParamTest {
-
-    @BeforeEach
-    public void setUp() {
-        RestAssured.baseURI = "https://qa-scooter.praktikum-services.ru/";
-    }
+    private final CourierApi courierApi = new CourierApi();
+    Courier courier;
 
     @ParameterizedTest
     @DisplayName("Нельзя создать курьера, если логин или пароль не заполнено")
     @MethodSource("courierData")
     public void createCourierMissingFieldReturn400(Courier courier) {
-        sendCreateCourierRequestStep(courier)
-                .then().assertThat().body("message", equalTo("Недостаточно данных для создания учетной записи"))
-                .and().statusCode(400);
+        this.courier = courier;
+        Response response = createCourierStep(courier);
+        checkCourierBadRequestStep(response);
     }
 
+    @AfterEach
+    public void deleteCourier(){
+        deleteCourierIfExistsStep();
+    }
+
+    // ----------------- Steps -----------------
+
     @Step("Отправляем запрос на создание курьера")
-    public Response sendCreateCourierRequestStep(Courier courier) {
-        return given()
-                .header("Content-type", "application/json")
-                .auth().none()
-                .body(courier)
-                .when()
-                .post("/api/v1/courier");
+    public Response createCourierStep(Courier courier) {
+        return courierApi.createCourier(courier);
+    }
+
+    @Step("Проверяем, что вернулся код 400 и сообщение о недостаточных данных")
+    public void checkCourierBadRequestStep(Response response) {
+        courierApi.checkCourierBadRequest(response);
+    }
+
+    @Step("Удяляем курьера, если создался")
+    public void deleteCourierIfExistsStep() {
+        courierApi.deleteCourierIfExists(courier);
     }
 
     static Stream<Courier> courierData() {

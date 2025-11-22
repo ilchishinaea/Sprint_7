@@ -1,50 +1,42 @@
+package tests;
+
+import api.OrderApi;
+import base.BaseTest;
 import io.qameta.allure.Step;
-import io.restassured.RestAssured;
 import io.restassured.response.Response;
-import org.junit.jupiter.api.BeforeEach;
+import models.Order;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
-
 import java.time.LocalDate;
 import java.util.Random;
 import java.util.UUID;
 import java.util.stream.Stream;
 
-import static io.restassured.RestAssured.given;
-import static org.hamcrest.Matchers.notNullValue;
+public class CreateOrderParamTest extends BaseTest {
 
-public class CreateOrderParamTest {
+    private final OrderApi orderApi = new OrderApi();
 
     private static final Random random = new Random();
-
-    @BeforeEach
-    public void setUp() {
-        RestAssured.baseURI = "https://qa-scooter.praktikum-services.ru/";
-    }
 
     @ParameterizedTest
     @DisplayName("Создание заказа")
     @MethodSource("orderData")
     public void createOrderReturn201(Order order) {
-        Response response = sendCreateOrderRequestStep(order);
-        verifyOrderCreatedStep(response);
+        Response response = createOrderStep(order);
+        checkOrderCreatedStep(response);
     }
 
+    // ----------------- Steps -----------------
+
     @Step("Отправляем запрос на создание заказа с данными: {order}")
-    public Response sendCreateOrderRequestStep(Order order) {
-        return given()
-                .header("Content-type", "application/json")
-                .auth().none()
-                .body(order)
-                .when()
-                .post("/api/v1/orders");
+    public Response createOrderStep(Order order) {
+        return orderApi.createOrder(order);
     }
 
     @Step("Проверяем, что заказ создан успешно (код 201 и трек не null)")
-    public void verifyOrderCreatedStep(Response response) {
-        response.then().assertThat().body("track", notNullValue())
-                .and().statusCode(201);
+    public void checkOrderCreatedStep(Response response) {
+        orderApi.checkOrderCreated(response);
     }
 
     static Stream<Order> orderData() {
