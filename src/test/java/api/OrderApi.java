@@ -1,4 +1,5 @@
 package api;
+import io.qameta.allure.Step;
 import io.restassured.response.Response;
 import models.Order;
 import static io.restassured.RestAssured.given;
@@ -8,7 +9,7 @@ import static org.hamcrest.Matchers.notNullValue;
 
 public class OrderApi {
 
-    //создание заказа
+    @Step("Отправляем запрос на создание заказа: {order}")
     public Response createOrder(Order order) {
         Response response =
                 given()
@@ -20,7 +21,7 @@ public class OrderApi {
         return response;
     }
 
-    //вернуть список заказов
+    @Step("Отправляем запрос на получение списка заказов")
     public Response getOrders() {
         Response response =
                 given()
@@ -31,7 +32,7 @@ public class OrderApi {
         return response;
     }
 
-    //проверка успешного создания заказа
+    @Step("Проверяем, что заказ создан успешно (код 201, track не null)")
     public void checkOrderCreated(Response response) {
         response.then()
                 .assertThat().statusCode(SC_CREATED)
@@ -39,7 +40,7 @@ public class OrderApi {
                 .body("track", notNullValue());
     }
 
-    //проверка, что список заказов не пустой
+    @Step("Проверяем ответ на список заказов (код 200, orders не null)")
     public void checkOrdersListOk(Response response) {
         response.then()
                 .assertThat().statusCode(SC_OK)

@@ -1,4 +1,5 @@
 package api;
+import io.qameta.allure.Step;
 import models.Courier;
 import io.restassured.response.Response;
 import static io.restassured.RestAssured.given;
@@ -8,7 +9,7 @@ import static org.hamcrest.Matchers.notNullValue;
 
 public class CourierApi {
 
-    //создание курьера
+    @Step("Отправляем запрос на создание курьера: {courier.login}, {courier.password}, {courier.firstName}")
     public Response createCourier(Courier courier) {
         Response response =
                 given()
@@ -20,7 +21,7 @@ public class CourierApi {
         return response;
     }
 
-    //логиним курьера, чтобы узнать его id
+    @Step("Отправляем запрос на получение id логина курьера: {courier.login}")
     public Response loginCourier(Courier courier) {
         Response response =
                 given()
@@ -32,7 +33,7 @@ public class CourierApi {
         return response;
     }
 
-    //удаление курьера
+    @Step("Удяляем курьера: {id}")
     public Response deleteCourier (int id){
         Response response =
                 given()
@@ -43,26 +44,26 @@ public class CourierApi {
         return response;
     }
 
-    //удаление курьера, если существует
+    @Step("Удяляем курьера, если создался: {c}")
     public void deleteCourierIfExists(Courier c) {
+        if (c == null) {
+            System.out.println("Курьер не передан (null), пропускаем удаление");
+            return;
+        }
 
         Response loginResponse = loginCourier(c);
         int status = loginResponse.statusCode();
-        int courierId;
 
         if (status == 200) {
-            courierId = loginResponse.then().extract().path("id");
+            int courierId = loginResponse.then().extract().path("id");
             deleteCourier(courierId);
-        } else if (status == 404) {
-            System.out.println("Учетная запись не найдена");
-        } else if (status == 400) {
-            System.out.println("Недостаточно данных для входа");
+            System.out.println("Курьер удален");
         } else {
-            System.out.println("Неожиданный код ответа при попытке авторизации курьера: " + status);
+            System.out.println("Курьер не найден или невозможно удалить (код: " + status + ")");
         }
     }
 
-    //проверка, что курьер создался
+    @Step("Проверяем, что курьер создался (код 201, содержит true)")
     public void checkCourierCreated (Response response){
         response.then()
                 .assertThat().statusCode(SC_CREATED)
@@ -70,7 +71,7 @@ public class CourierApi {
                 .body("ok", equalTo(true));
     }
 
-    //проверка ошибки на повторяющийся запрос для создания курьера
+    @Step("Проевряем, что курьер не создается, если запрос повторяется или логин уже зарегистирован (код 409, сообщение 'Этот логин уже используется')")
     public Response checkCourierConflict(Response response){
         response.then()
                 .assertThat().statusCode(SC_CONFLICT)
@@ -79,7 +80,7 @@ public class CourierApi {
         return response;
     }
 
-    //проверка ошибки на неполный запрос для создания курьера
+    @Step("Проверяем, что курьер не создается, если нет логина или пароля (код 400, сообщение 'Недостаточно данных для создания учетной записи')")
     public void checkCourierBadRequest (Response response){
         response.then()
                 .assertThat().statusCode(SC_BAD_REQUEST)
@@ -87,7 +88,7 @@ public class CourierApi {
                 .body("message", equalTo("Недостаточно данных для создания учетной записи"));
     }
 
-    //проверяем, что в ответе есть id логина
+    @Step("Проверяем успешный логин курьера (код 200, id не null)")
     public void checkLoginOk(Response response) {
         response.then()
                 .assertThat().statusCode(SC_OK)
@@ -96,7 +97,7 @@ public class CourierApi {
 
     }
 
-    //проверяем ошибку на недостаточность данных запроса для логина
+    @Step("Проверяем ошибку получения id логина если нет логина или пароля (код 400, сообщение 'Недостаточно данных для входа')")
     public void checkLoginBadRequest(Response response) {
         response.then()
                 .assertThat().statusCode(SC_BAD_REQUEST)
@@ -104,7 +105,7 @@ public class CourierApi {
                 .body("message", equalTo("Недостаточно данных для входа"));
     }
 
-    //проверяем ошибку на несуществующую пару
+    @Step("Проверяем ошибку получения id логина если в логине или пароле ошибка или пара не существует (код 404, сообщение 'Учетная запись не найдена')")
     public void checkLoginNotFound(Response response) {
         response.then()
                 .assertThat().statusCode(SC_NOT_FOUND)
@@ -112,7 +113,7 @@ public class CourierApi {
                 .body("message", equalTo("Учетная запись не найдена"));
     }
 
-    //проверяем, что курьер удален
+    @Step("Проверяем, что курьер удален (код 200)")
     public void chekDeleteCourierOk (Response response){
         response.then()
                 .statusCode(200);

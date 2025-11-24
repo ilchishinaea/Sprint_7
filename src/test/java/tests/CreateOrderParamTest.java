@@ -2,7 +2,6 @@ package tests;
 
 import api.OrderApi;
 import base.BaseTest;
-import io.qameta.allure.Step;
 import io.restassured.response.Response;
 import models.Order;
 import org.junit.jupiter.api.DisplayName;
@@ -23,19 +22,7 @@ public class CreateOrderParamTest extends BaseTest {
     @DisplayName("Создание заказа")
     @MethodSource("orderData")
     public void createOrderReturn201(Order order) {
-        Response response = createOrderStep(order);
-        checkOrderCreatedStep(response);
-    }
-
-    // ----------------- Steps -----------------
-
-    @Step("Отправляем запрос на создание заказа с данными: {order}")
-    public Response createOrderStep(Order order) {
-        return orderApi.createOrder(order);
-    }
-
-    @Step("Проверяем, что заказ создан успешно (код 201 и трек не null)")
-    public void checkOrderCreatedStep(Response response) {
+        Response response = orderApi.createOrder(order);
         orderApi.checkOrderCreated(response);
     }
 
